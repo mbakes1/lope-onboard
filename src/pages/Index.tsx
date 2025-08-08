@@ -165,7 +165,7 @@ function Stepper({ current }: { current: number }) {
         const active = i === current;
         const done = i < current;
         return (
-          <li key={s.key} className="flex items-center gap-3">
+          <li key={s.key} className="flex items-center gap-3" aria-current={active ? "step" : undefined}>
             <span
               className={[
                 "inline-flex h-8 w-8 items-center justify-center rounded-full border",
@@ -188,13 +188,13 @@ function Stepper({ current }: { current: number }) {
 function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
   return (
     <section className="space-y-6">
-      <header>
-        <h2 className="text-xl font-semibold">{title}</h2>
+      <header className="space-y-1">
+        <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
         {description && (
           <p className="text-sm text-muted-foreground mt-1">{description}</p>
         )}
       </header>
-      <div className="grid gap-4 sm:grid-cols-2">{children}</div>
+      <div className="grid gap-6 sm:grid-cols-2">{children}</div>
     </section>
   );
 }
@@ -205,7 +205,7 @@ function FileField({ name, label, accept, required }: { name: keyof FormValues; 
       name={name as any}
       render={({ field, fieldState }) => (
         <FormItem>
-          <FormLabel>{label}{required ? " *" : ""}</FormLabel>
+          <FormLabel>{label}</FormLabel>
           <FormControl>
             <Input
               type="file"
@@ -312,7 +312,7 @@ const Index = () => {
         <h1 className="sr-only">Hauler Onboarding Flow</h1>
         <div className="mx-auto max-w-3xl">
           <Card className="relative border bg-card shadow-[var(--shadow-elevated)]">
-            <CardHeader className="space-y-1">
+            <CardHeader className="space-y-2">
               <CardTitle className="text-2xl">Hauler Onboarding</CardTitle>
               <CardDescription>Minimal, human‑centred flow. Lots of clarity, no clutter.</CardDescription>
               <Stepper current={step} />
@@ -349,8 +349,10 @@ const Index = () => {
                                 <Input
                                   inputMode="decimal"
                                   type="number"
-                                  min={0}
+                                  min={1}
+                                  max={15}
                                   step="0.1"
+                                  placeholder="1–15"
                                   value={field.value ?? ""}
                                   onChange={(e) => field.onChange(Number(e.target.value))}
                                 />
@@ -624,7 +626,7 @@ const Index = () => {
                       </Section>
                     )}
 
-                    <div className="flex items-center justify-between pt-2">
+                    <div className="flex items-center justify-between border-t pt-4 mt-2">
                       <Button type="button" variant="secondary" onClick={goBack} disabled={step === 0}>
                         Back
                       </Button>
