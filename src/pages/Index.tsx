@@ -688,9 +688,9 @@ const Index = () => {
         style={{ background: "var(--gradient-brand)" }}
       />
 
-      <div className="container mx-auto px-4 py-10 md:py-16">
+      <div className="min-h-screen flex items-center justify-center px-4 py-10 md:py-16">
         <h1 className="sr-only">Hauler Onboarding Flow</h1>
-        <div className="mx-auto max-w-3xl">
+        <div className="w-full max-w-3xl">
           <Card className="relative border bg-card shadow-[var(--shadow-elevated)] animate-fade-in">
             <div className="absolute inset-x-0 top-0 h-1 bg-border">
               <div
