@@ -83,6 +83,7 @@ All colors MUST be HSL.
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 0 72% 55%;
+    --gradient-brand: radial-gradient(80% 60% at 80% 0%, hsl(0 72% 60% / 0.10) 0%, hsl(0 72% 47% / 0.06) 40%, transparent 70%);
 
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;

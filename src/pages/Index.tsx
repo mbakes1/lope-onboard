@@ -19,11 +19,14 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Check, AlertCircle } from "lucide-react";
 
 // Provinces list for South Africa
 const PROVINCES = [
@@ -158,21 +161,26 @@ const steps = [
   { key: "terms", title: "Terms & Consent", desc: "Agreements & privacy" },
 ];
 
-function Stepper({ current }: { current: number }) {
+function Stepper({ current, onStepClick }: { current: number; onStepClick?: (i: number) => void }) {
   return (
     <ol className="flex items-center justify-center gap-8 mb-8">
       {steps.map((s, i) => {
         const active = i === current;
         const done = i < current;
         return (
-          <li key={s.key} className="flex items-center gap-3" aria-current={active ? "step" : undefined}>
+          <li
+            key={s.key}
+            className={["flex items-center gap-3", done ? "cursor-pointer" : ""].join(" ")}
+            aria-current={active ? "step" : undefined}
+            onClick={() => done && onStepClick?.(i)}
+          >
             <span
               className={[
                 "inline-flex h-8 w-8 items-center justify-center rounded-full border",
                 done ? "bg-primary text-primary-foreground border-primary" : active ? "border-primary text-primary" : "border-muted-foreground/30 text-muted-foreground",
               ].join(" ")}
             >
-              {done ? "✓" : i + 1}
+              {done ? <Check className="h-4 w-4" /> : i + 1}
             </span>
             <div className="hidden sm:block">
               <div className="text-sm font-medium">{s.title}</div>
@@ -189,7 +197,7 @@ function Section({ title, description, children }: { title: string; description?
   return (
     <section className="space-y-6">
       <header className="space-y-1">
-        <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
+        <h2 className="text-2xl font-semibold tracking-tight font-playfair">{title}</h2>
         {description && (
           <p className="text-sm text-muted-foreground mt-1">{description}</p>
         )}
@@ -216,6 +224,17 @@ function FileField({ name, label, accept, required }: { name: keyof FormValues; 
               }}
             />
           </FormControl>
+          {accept && (
+            <FormDescription>Accepted types: {accept.split(',').join(', ')}</FormDescription>
+          )}
+          {field.value && (
+            <div className="mt-2 flex items-center justify-between rounded-md border px-3 py-2 text-sm">
+              <span className="truncate">
+                {field.value?.name} ({typeof field.value?.size === 'number' ? Math.round(field.value.size / 1024) : 0} KB)
+              </span>
+              <Button type="button" variant="ghost" size="sm" onClick={() => field.onChange(undefined)}>Clear</Button>
+            </div>
+          )}
           {fieldState.error && <FormMessage />}
         </FormItem>
       )}
@@ -279,7 +298,7 @@ const Index = () => {
     if (!hasDocs) return { ok: false, reason: "Reject: Missing ownership or roadworthy or insurance" };
     return { ok: true } as const;
   }, [ownsVehicle, eligCap, hasDocs]);
-
+  const progressPct = Math.round((step / (steps.length - 1)) * 100);
   const goNext = async () => {
     const fieldsByStep: (keyof FormValues)[][] = [
       ["ownsVehicle", "eligibilityCapacityTons", "hasRequiredDocs"],
@@ -311,11 +330,14 @@ const Index = () => {
       <div className="container mx-auto px-4 py-10 md:py-16">
         <h1 className="sr-only">Hauler Onboarding Flow</h1>
         <div className="mx-auto max-w-3xl">
-          <Card className="relative border bg-card shadow-[var(--shadow-elevated)]">
+          <Card className="relative border bg-card shadow-[var(--shadow-elevated)] animate-fade-in">
+            <div className="absolute inset-x-0 top-0 h-1 bg-border">
+              <div className="h-1 bg-primary transition-all" style={{ width: `${progressPct}%` }} />
+            </div>
             <CardHeader className="space-y-2">
-              <CardTitle className="text-2xl">Hauler Onboarding</CardTitle>
+              <CardTitle className="text-2xl font-playfair">Hauler Onboarding</CardTitle>
               <CardDescription>Minimal, human‑centred flow. Lots of clarity, no clutter.</CardDescription>
-              <Stepper current={step} />
+              <Stepper current={step} onStepClick={(i) => setStep(i)} />
             </CardHeader>
             <CardContent>
               <FormProvider {...methods}>
@@ -378,8 +400,12 @@ const Index = () => {
                           )}
                         />
                         {!eligibilityStatus.ok && (
-                          <div className="col-span-2 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-destructive">
-                            {eligibilityStatus.reason}
+                          <div className="col-span-2" aria-live="polite">
+                            <Alert variant="destructive">
+                              <AlertCircle className="h-4 w-4" />
+                              <AlertTitle>Doesn’t meet requirements</AlertTitle>
+                              <AlertDescription>{eligibilityStatus.reason}</AlertDescription>
+                            </Alert>
                           </div>
                         )}
                       </Section>
@@ -390,14 +416,14 @@ const Index = () => {
                         <FormField name="fullName" control={control} render={({ field }) => (
                           <FormItem>
                             <FormLabel>Full name</FormLabel>
-                            <FormControl><Input {...field} /></FormControl>
+                            <FormControl><Input autoComplete="name" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
                         <FormField name="idNumber" control={control} render={({ field }) => (
                           <FormItem>
                             <FormLabel>ID or Passport number</FormLabel>
-                            <FormControl><Input {...field} /></FormControl>
+                            <FormControl><Input autoComplete="off" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
@@ -427,24 +453,25 @@ const Index = () => {
                             </FormItem>
                           )} />
                         )}
-                        <FormField name="mobile" control={control} render={({ field }) => (
+                        <FormField name="mobile" control={control} render={({ field, fieldState }) => (
                           <FormItem>
                             <FormLabel>Mobile number</FormLabel>
-                            <FormControl><Input placeholder="e.g. 0821234567 or +27821234567" {...field} /></FormControl>
+                            <FormControl><Input placeholder="e.g. 0821234567 or +27821234567" autoComplete="tel" className={fieldState.invalid ? "border-destructive focus-visible:ring-destructive" : undefined} {...field} /></FormControl>
+                            <FormDescription>Use SA format: 0XXXXXXXXX or +27XXXXXXXXX</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )} />
                         <FormField name="email" control={control} render={({ field }) => (
                           <FormItem>
                             <FormLabel>Email</FormLabel>
-                            <FormControl><Input type="email" {...field} /></FormControl>
+                            <FormControl><Input type="email" autoComplete="email" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
                         <FormField name="address" control={control} render={({ field }) => (
                           <FormItem className="sm:col-span-2">
                             <FormLabel>Physical address</FormLabel>
-                            <FormControl><Input {...field} /></FormControl>
+                            <FormControl><Input autoComplete="street-address" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
@@ -517,7 +544,7 @@ const Index = () => {
                         <FormField name="registrationNumber" control={control} render={({ field }) => (
                           <FormItem>
                             <FormLabel>Registration number</FormLabel>
-                            <FormControl><Input {...field} /></FormControl>
+                            <FormControl><Input autoComplete="off" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
@@ -533,21 +560,22 @@ const Index = () => {
                         <FormField name="bankName" control={control} render={({ field }) => (
                           <FormItem>
                             <FormLabel>Bank name</FormLabel>
-                            <FormControl><Input {...field} /></FormControl>
+                            <FormControl><Input autoComplete="off" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
                         <FormField name="accountHolder" control={control} render={({ field }) => (
                           <FormItem>
                             <FormLabel>Account holder</FormLabel>
-                            <FormControl><Input {...field} /></FormControl>
+                            <FormControl><Input autoComplete="name" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
-                        <FormField name="accountNumber" control={control} render={({ field }) => (
+                        <FormField name="accountNumber" control={control} render={({ field, fieldState }) => (
                           <FormItem>
                             <FormLabel>Account number</FormLabel>
-                            <FormControl><Input inputMode="numeric" {...field} /></FormControl>
+                            <FormControl><Input inputMode="numeric" autoComplete="off" className={fieldState.invalid ? "border-destructive focus-visible:ring-destructive" : undefined} {...field} /></FormControl>
+                            <FormDescription>8–13 digits as on your statement</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )} />
@@ -569,10 +597,11 @@ const Index = () => {
                             <FormMessage />
                           </FormItem>
                         )} />
-                        <FormField name="branchCode" control={control} render={({ field }) => (
+                        <FormField name="branchCode" control={control} render={({ field, fieldState }) => (
                           <FormItem>
                             <FormLabel>Branch code</FormLabel>
-                            <FormControl><Input inputMode="numeric" {...field} /></FormControl>
+                            <FormControl><Input inputMode="numeric" autoComplete="off" className={fieldState.invalid ? "border-destructive focus-visible:ring-destructive" : undefined} {...field} /></FormControl>
+                            <FormDescription>6 digits (e.g., 250655)</FormDescription>
                             <FormMessage />
                           </FormItem>
                         )} />
@@ -626,16 +655,16 @@ const Index = () => {
                       </Section>
                     )}
 
-                    <div className="flex items-center justify-between border-t pt-4 mt-2">
+                    <div className="sticky bottom-0 left-0 right-0 -mx-6 px-6 bg-card/90 backdrop-blur supports-[backdrop-filter]:bg-card/80 border-t pt-4 mt-2 z-10">
                       <Button type="button" variant="secondary" onClick={goBack} disabled={step === 0}>
                         Back
                       </Button>
                       {step < steps.length - 1 ? (
-                        <Button type="button" onClick={goNext} disabled={step === 0 && !eligibilityStatus.ok}>
+                        <Button type="button" onClick={goNext} disabled={step === 0 && !eligibilityStatus.ok} className="transition-transform hover:-translate-y-0.5">
                           Continue
                         </Button>
                       ) : (
-                        <Button type="submit">Submit</Button>
+                        <Button type="submit" className="transition-transform hover:-translate-y-0.5">Submit</Button>
                       )}
                     </div>
 
