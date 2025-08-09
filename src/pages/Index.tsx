@@ -205,39 +205,60 @@ function Stepper({
   onStepClick?: (i: number) => void;
 }) {
   return (
-    <ol className="flex items-center justify-between w-full mb-8">
-      {steps.map((s, i) => {
-        const active = i === current;
-        const done = i < current;
-        return (
-          <li
-            key={s.key}
-            className={[
-              "flex items-center gap-2",
-              done ? "cursor-pointer" : "",
-            ].join(" ")}
-            aria-current={active ? "step" : undefined}
-            onClick={() => done && onStepClick?.(i)}
-          >
-            <div
+    <div className="mb-8">
+      {/* Mobile: Show current step info */}
+      <div className="block sm:hidden mb-4 text-center">
+        <div className="text-sm text-muted-foreground">
+          Step {current + 1} of {steps.length}
+        </div>
+        <div className="text-base font-medium">{steps[current].title}</div>
+      </div>
+
+      {/* Progress bar for mobile */}
+      <div className="block sm:hidden mb-6">
+        <div className="w-full bg-muted rounded-full h-2">
+          <div
+            className="h-2 bg-primary rounded-full transition-all duration-300"
+            style={{ width: `${((current + 1) / steps.length) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Desktop: Full stepper */}
+      <ol className="hidden sm:flex items-center justify-between w-full">
+        {steps.map((s, i) => {
+          const active = i === current;
+          const done = i < current;
+          return (
+            <li
+              key={s.key}
               className={[
-                "flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm font-medium transition-colors",
-                done
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : active
-                  ? "border-primary text-primary bg-primary/10"
-                  : "border-muted-foreground/30 text-muted-foreground",
+                "flex items-center gap-2",
+                done ? "cursor-pointer" : "",
               ].join(" ")}
+              aria-current={active ? "step" : undefined}
+              onClick={() => done && onStepClick?.(i)}
             >
-              {done ? <Check className="h-4 w-4" /> : i + 1}
-            </div>
-            <div className="hidden sm:block text-sm font-sans font-medium text-muted-foreground">
-              {s.title}
-            </div>
-          </li>
-        );
-      })}
-    </ol>
+              <div
+                className={[
+                  "flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm font-medium transition-colors",
+                  done
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : active
+                    ? "border-primary text-primary bg-primary/10"
+                    : "border-muted-foreground/30 text-muted-foreground",
+                ].join(" ")}
+              >
+                {done ? <Check className="h-4 w-4" /> : i + 1}
+              </div>
+              <div className="text-sm font-sans font-medium text-muted-foreground">
+                {s.title}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
   );
 }
 
@@ -251,7 +272,7 @@ function Section({
   return (
     <section className="space-y-6">
       <h2 className="text-xl font-heading font-semibold">{title}</h2>
-      <div className="grid gap-4 sm:grid-cols-2">{children}</div>
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">{children}</div>
     </section>
   );
 }
@@ -674,7 +695,7 @@ const Index = () => {
         style={{ background: "var(--gradient-brand)" }}
       />
 
-      <div className="min-h-screen flex items-center justify-center px-4 py-10 md:py-16">
+      <div className="min-h-screen flex items-start sm:items-center justify-center px-4 py-6 sm:py-10 md:py-16">
         <h1 className="sr-only">Hauler Onboarding Flow</h1>
         <div className="w-full max-w-3xl">
           <Card className="relative border bg-card shadow-[var(--shadow-elevated)] animate-fade-in">
@@ -961,44 +982,58 @@ const Index = () => {
                             Vehicle Info
                           </h2>
 
-                          {/* Number of Trucks */}
+                          {/* Number of Trucks - Mobile Optimized */}
                           <div className="space-y-4">
                             <FormField
                               name="numberOfTrucks"
                               control={control}
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Number of Trucks</FormLabel>
-                                  <div className="flex items-center gap-3">
+                                  <FormLabel className="text-base font-medium">
+                                    Number of Trucks
+                                  </FormLabel>
+                                  <div className="flex items-center justify-center gap-4 p-4 bg-muted/30 rounded-lg">
                                     <Button
                                       type="button"
                                       variant="outline"
-                                      size="sm"
+                                      size="lg"
                                       onClick={() =>
                                         field.onChange(
                                           Math.max(1, (field.value || 1) - 1)
                                         )
                                       }
                                       disabled={(field.value || 1) <= 1}
+                                      className="h-12 w-12 rounded-full"
                                     >
-                                      <Minus className="h-4 w-4" />
+                                      <Minus className="h-5 w-5" />
                                     </Button>
-                                    <span className="text-lg font-semibold min-w-[3ch] text-center">
-                                      {field.value || 1}
-                                    </span>
+                                    <div className="flex flex-col items-center gap-1">
+                                      <span className="text-2xl font-bold min-w-[4ch] text-center">
+                                        {field.value || 1}
+                                      </span>
+                                      <span className="text-xs text-muted-foreground">
+                                        {(field.value || 1) === 1
+                                          ? "truck"
+                                          : "trucks"}
+                                      </span>
+                                    </div>
                                     <Button
                                       type="button"
                                       variant="outline"
-                                      size="sm"
+                                      size="lg"
                                       onClick={() =>
                                         field.onChange(
                                           Math.min(10, (field.value || 1) + 1)
                                         )
                                       }
                                       disabled={(field.value || 1) >= 10}
+                                      className="h-12 w-12 rounded-full"
                                     >
-                                      <Plus className="h-4 w-4" />
+                                      <Plus className="h-5 w-5" />
                                     </Button>
+                                  </div>
+                                  <div className="text-xs text-muted-foreground text-center">
+                                    Maximum 10 trucks allowed
                                   </div>
                                   <FormMessage />
                                 </FormItem>
@@ -1024,97 +1059,154 @@ const Index = () => {
                                 )}
                               </div>
 
-                              {/* Truck Tabs for Multiple Trucks */}
+                              {/* Truck Tabs for Multiple Trucks - Mobile Optimized */}
                               {numberOfTrucks > 1 && (
-                                <div className="flex gap-2 overflow-x-auto pb-2">
-                                  {Array.from(
-                                    { length: numberOfTrucks },
-                                    (_, i) => {
-                                      const truck = trucks[i];
-                                      const isComplete = isTruckComplete(truck);
-                                      const isCurrent = i === currentTruckIndex;
-
-                                      return (
-                                        <div
-                                          key={i}
-                                          className={[
-                                            "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap border group",
-                                            isCurrent
-                                              ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                                              : isComplete
-                                              ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
-                                              : "bg-background text-muted-foreground border-border hover:bg-muted hover:text-foreground",
-                                          ].join(" ")}
-                                        >
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              setCurrentTruckIndex(i)
-                                            }
-                                            className="flex items-center gap-2 flex-1"
-                                          >
+                                <div className="space-y-3">
+                                  {/* Mobile: Dropdown selector */}
+                                  <div className="block sm:hidden">
+                                    <Select
+                                      value={currentTruckIndex.toString()}
+                                      onValueChange={(value) =>
+                                        setCurrentTruckIndex(parseInt(value))
+                                      }
+                                    >
+                                      <SelectTrigger className="w-full">
+                                        <SelectValue>
+                                          <div className="flex items-center gap-2">
                                             <Truck className="h-4 w-4" />
-                                            <span>Truck {i + 1}</span>
-                                            {isComplete && (
-                                              <CheckCircle className="h-4 w-4" />
+                                            <span>
+                                              Truck {currentTruckIndex + 1}
+                                            </span>
+                                            {isTruckComplete(
+                                              trucks[currentTruckIndex]
+                                            ) && (
+                                              <CheckCircle className="h-4 w-4 text-green-600" />
                                             )}
-                                          </button>
-                                          {numberOfTrucks > 1 && (
+                                          </div>
+                                        </SelectValue>
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {Array.from(
+                                          { length: numberOfTrucks },
+                                          (_, i) => {
+                                            const truck = trucks[i];
+                                            const isComplete =
+                                              isTruckComplete(truck);
+                                            return (
+                                              <SelectItem
+                                                key={i}
+                                                value={i.toString()}
+                                              >
+                                                <div className="flex items-center gap-2">
+                                                  <Truck className="h-4 w-4" />
+                                                  <span>Truck {i + 1}</span>
+                                                  {isComplete && (
+                                                    <CheckCircle className="h-4 w-4 text-green-600" />
+                                                  )}
+                                                </div>
+                                              </SelectItem>
+                                            );
+                                          }
+                                        )}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+
+                                  {/* Desktop: Horizontal tabs */}
+                                  <div className="hidden sm:flex gap-2 overflow-x-auto pb-2">
+                                    {Array.from(
+                                      { length: numberOfTrucks },
+                                      (_, i) => {
+                                        const truck = trucks[i];
+                                        const isComplete =
+                                          isTruckComplete(truck);
+                                        const isCurrent =
+                                          i === currentTruckIndex;
+
+                                        return (
+                                          <div
+                                            key={i}
+                                            className={[
+                                              "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap border group",
+                                              isCurrent
+                                                ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                                                : isComplete
+                                                ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                                                : "bg-background text-muted-foreground border-border hover:bg-muted hover:text-foreground",
+                                            ].join(" ")}
+                                          >
                                             <button
                                               type="button"
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                const currentTrucks = [
-                                                  ...trucks,
-                                                ];
-                                                currentTrucks.splice(i, 1);
-                                                setValue(
-                                                  "trucks",
-                                                  currentTrucks
-                                                );
-                                                setValue(
-                                                  "numberOfTrucks",
-                                                  numberOfTrucks - 1
-                                                );
-
-                                                // Adjust current truck index if needed
-                                                if (currentTruckIndex >= i) {
-                                                  setCurrentTruckIndex(
-                                                    Math.max(
-                                                      0,
-                                                      currentTruckIndex - 1
-                                                    )
-                                                  );
-                                                }
-                                              }}
-                                              className={[
-                                                "opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-destructive/10",
-                                                isCurrent
-                                                  ? "text-primary-foreground hover:bg-white/20"
-                                                  : "text-muted-foreground hover:text-destructive",
-                                              ].join(" ")}
-                                              title={`Remove Truck ${i + 1}`}
+                                              onClick={() =>
+                                                setCurrentTruckIndex(i)
+                                              }
+                                              className="flex items-center gap-2 flex-1"
                                             >
-                                              <X className="h-3 w-3" />
+                                              <Truck className="h-4 w-4" />
+                                              <span>Truck {i + 1}</span>
+                                              {isComplete && (
+                                                <CheckCircle className="h-4 w-4" />
+                                              )}
                                             </button>
-                                          )}
-                                        </div>
-                                      );
-                                    }
-                                  )}
+                                            {numberOfTrucks > 1 && (
+                                              <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  const currentTrucks = [
+                                                    ...trucks,
+                                                  ];
+                                                  currentTrucks.splice(i, 1);
+                                                  setValue(
+                                                    "trucks",
+                                                    currentTrucks
+                                                  );
+                                                  setValue(
+                                                    "numberOfTrucks",
+                                                    numberOfTrucks - 1
+                                                  );
+
+                                                  // Adjust current truck index if needed
+                                                  if (currentTruckIndex >= i) {
+                                                    setCurrentTruckIndex(
+                                                      Math.max(
+                                                        0,
+                                                        currentTruckIndex - 1
+                                                      )
+                                                    );
+                                                  }
+                                                }}
+                                                className={[
+                                                  "opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-destructive/10",
+                                                  isCurrent
+                                                    ? "text-primary-foreground hover:bg-white/20"
+                                                    : "text-muted-foreground hover:text-destructive",
+                                                ].join(" ")}
+                                                title={`Remove Truck ${i + 1}`}
+                                              >
+                                                <X className="h-3 w-3" />
+                                              </button>
+                                            )}
+                                          </div>
+                                        );
+                                      }
+                                    )}
+                                  </div>
                                 </div>
                               )}
 
                               {/* Current Truck Form */}
-                              <div className="border rounded-lg p-6 space-y-6 bg-background">
-                                <div className="flex items-center justify-between">
+                              <div className="border rounded-lg p-4 sm:p-6 space-y-6 bg-background">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                   <h4 className="text-lg font-heading font-medium flex items-center gap-2">
                                     <Truck className="h-5 w-5 text-primary" />
                                     Truck {currentTruckIndex + 1}
                                   </h4>
-                                  <div className="flex gap-2">
+
+                                  {/* Mobile: Stack navigation buttons vertically */}
+                                  <div className="flex flex-col sm:flex-row gap-2">
                                     {numberOfTrucks > 1 && (
-                                      <>
+                                      <div className="flex gap-2">
                                         <Button
                                           type="button"
                                           variant="outline"
@@ -1125,9 +1217,15 @@ const Index = () => {
                                             )
                                           }
                                           disabled={currentTruckIndex === 0}
+                                          className="flex-1 sm:flex-none"
                                         >
                                           <ChevronLeft className="h-4 w-4" />
-                                          Previous
+                                          <span className="hidden sm:inline">
+                                            Previous
+                                          </span>
+                                          <span className="sm:hidden">
+                                            Prev
+                                          </span>
                                         </Button>
                                         <Button
                                           type="button"
@@ -1145,11 +1243,17 @@ const Index = () => {
                                             currentTruckIndex ===
                                             numberOfTrucks - 1
                                           }
+                                          className="flex-1 sm:flex-none"
                                         >
-                                          Next
+                                          <span className="hidden sm:inline">
+                                            Next
+                                          </span>
+                                          <span className="sm:hidden">
+                                            Next
+                                          </span>
                                           <ChevronRight className="h-4 w-4" />
                                         </Button>
-                                      </>
+                                      </div>
                                     )}
                                     {numberOfTrucks > 1 && (
                                       <Button
@@ -1181,16 +1285,17 @@ const Index = () => {
                                             );
                                           }
                                         }}
+                                        className="w-full sm:w-auto"
                                       >
                                         <X className="h-4 w-4" />
-                                        Remove
+                                        Remove Truck
                                       </Button>
                                     )}
                                   </div>
                                 </div>
 
-                                {/* Basic Truck Info */}
-                                <div className="grid gap-4 sm:grid-cols-2">
+                                {/* Basic Truck Info - Mobile Optimized */}
+                                <div className="space-y-4">
                                   <FormField
                                     name={`trucks.${currentTruckIndex}.vehicleType`}
                                     control={control}
@@ -1202,7 +1307,7 @@ const Index = () => {
                                           onValueChange={field.onChange}
                                         >
                                           <FormControl>
-                                            <SelectTrigger>
+                                            <SelectTrigger className="h-12">
                                               <SelectValue placeholder="Select vehicle type" />
                                             </SelectTrigger>
                                           </FormControl>
@@ -1228,55 +1333,61 @@ const Index = () => {
                                       </FormItem>
                                     )}
                                   />
-                                  <FormField
-                                    name={`trucks.${currentTruckIndex}.loadCapacity`}
-                                    control={control}
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <FormLabel>Load Capacity</FormLabel>
-                                        <div className="relative">
+
+                                  <div className="grid gap-4 sm:grid-cols-2">
+                                    <FormField
+                                      name={`trucks.${currentTruckIndex}.loadCapacity`}
+                                      control={control}
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>Load Capacity</FormLabel>
+                                          <div className="relative">
+                                            <FormControl>
+                                              <Input
+                                                type="number"
+                                                min={1}
+                                                max={15}
+                                                step="0.1"
+                                                placeholder="e.g. 3.5"
+                                                value={field.value ?? ""}
+                                                onChange={(e) =>
+                                                  field.onChange(
+                                                    Number(e.target.value)
+                                                  )
+                                                }
+                                                className="h-12 pr-16"
+                                              />
+                                            </FormControl>
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                                              tons
+                                            </span>
+                                          </div>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+
+                                    <FormField
+                                      name={`trucks.${currentTruckIndex}.registrationNumber`}
+                                      control={control}
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>
+                                            Registration Number
+                                          </FormLabel>
                                           <FormControl>
                                             <Input
-                                              type="number"
-                                              min={1}
-                                              max={15}
-                                              step="0.1"
-                                              placeholder="e.g. 3.5"
-                                              value={field.value ?? ""}
-                                              onChange={(e) =>
-                                                field.onChange(
-                                                  Number(e.target.value)
-                                                )
-                                              }
+                                              placeholder="e.g. ABC123GP"
+                                              autoComplete="off"
+                                              className="h-12"
+                                              {...field}
                                             />
                                           </FormControl>
-                                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                                            tons
-                                          </span>
-                                        </div>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
-                                  <FormField
-                                    name={`trucks.${currentTruckIndex}.registrationNumber`}
-                                    control={control}
-                                    render={({ field }) => (
-                                      <FormItem className="sm:col-span-2">
-                                        <FormLabel>
-                                          Registration Number
-                                        </FormLabel>
-                                        <FormControl>
-                                          <Input
-                                            placeholder="e.g. ABC123GP"
-                                            autoComplete="off"
-                                            {...field}
-                                          />
-                                        </FormControl>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
                                 </div>
 
                                 {/* Document Upload Section */}
@@ -1318,7 +1429,7 @@ const Index = () => {
                                 })()}
                               </div>
 
-                              {/* Overall Progress for Multiple Trucks */}
+                              {/* Overall Progress for Multiple Trucks - Mobile Optimized */}
                               {numberOfTrucks > 1 && (
                                 <div
                                   className={[
@@ -1328,7 +1439,7 @@ const Index = () => {
                                       : "bg-muted/30 border-border",
                                   ].join(" ")}
                                 >
-                                  <div className="flex items-center justify-between mb-3">
+                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                                     <span className="text-sm font-medium flex items-center gap-2">
                                       Overall Progress
                                       {completedTrucks === numberOfTrucks && (
@@ -1347,10 +1458,10 @@ const Index = () => {
                                       completed
                                     </span>
                                   </div>
-                                  <div className="w-full bg-muted rounded-full h-2">
+                                  <div className="w-full bg-muted rounded-full h-3">
                                     <div
                                       className={[
-                                        "h-2 rounded-full transition-all duration-300",
+                                        "h-3 rounded-full transition-all duration-300",
                                         completedTrucks === numberOfTrucks
                                           ? "bg-green-500"
                                           : "bg-primary",
@@ -1361,7 +1472,7 @@ const Index = () => {
                                     />
                                   </div>
                                   {completedTrucks === numberOfTrucks && (
-                                    <div className="mt-3 text-sm text-green-700 font-medium">
+                                    <div className="mt-3 text-sm text-green-700 font-medium text-center sm:text-left">
                                       🎉 All trucks completed! You're ready to
                                       continue.
                                     </div>
@@ -1618,13 +1729,14 @@ const Index = () => {
                         </Section>
                       )}
 
-                      <div className="sticky bottom-0 left-0 right-0 -mx-6 px-6 bg-card/90 backdrop-blur supports-[backdrop-filter]:bg-card/80 border-t pt-4 mt-2 z-10">
-                        <div className="flex justify-between">
+                      <div className="sticky bottom-0 left-0 right-0 -mx-6 px-4 sm:px-6 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/90 border-t pt-4 pb-2 sm:pb-0 mt-2 z-10">
+                        <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-0">
                           <Button
                             type="button"
                             variant="secondary"
                             onClick={goBack}
                             disabled={step === 0}
+                            className="order-2 sm:order-1 h-12 sm:h-10"
                           >
                             Back
                           </Button>
@@ -1633,16 +1745,16 @@ const Index = () => {
                               type="button"
                               onClick={goNext}
                               disabled={step === 0 && !eligibilityStatus.ok}
-                              className="transition-transform hover:-translate-y-0.5"
+                              className="order-1 sm:order-2 h-12 sm:h-10 transition-transform hover:-translate-y-0.5"
                             >
                               Continue
                             </Button>
                           ) : (
                             <Button
                               type="submit"
-                              className="transition-transform hover:-translate-y-0.5"
+                              className="order-1 sm:order-2 h-12 sm:h-10 transition-transform hover:-translate-y-0.5"
                             >
-                              Submit
+                              Submit Application
                             </Button>
                           )}
                         </div>
