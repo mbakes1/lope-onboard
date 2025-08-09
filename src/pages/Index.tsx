@@ -51,6 +51,7 @@ import {
   X,
 } from "lucide-react";
 import confetti from "canvas-confetti";
+import Footer from "@/components/Footer";
 
 // Provinces list for South Africa
 const PROVINCES = [
@@ -688,14 +689,14 @@ const Index = () => {
   };
 
   return (
-    <main className="min-h-screen relative">
+    <main className="min-h-screen relative flex flex-col">
       {/* Signature ambient gradient */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{ background: "var(--gradient-brand)" }}
       />
 
-      <div className="min-h-screen flex items-start sm:items-center justify-center px-4 py-6 sm:py-10 md:py-16">
+      <div className="flex-1 flex items-start sm:items-center justify-center px-4 py-6 sm:py-10 md:py-16">
         <h1 className="sr-only">Hauler Onboarding Flow</h1>
         <div className="w-full max-w-3xl">
           <Card className="relative border bg-card shadow-[var(--shadow-elevated)] animate-fade-in">
@@ -1800,6 +1801,8 @@ const Index = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Footer />
     </main>
   );
 };
