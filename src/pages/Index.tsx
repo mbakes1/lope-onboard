@@ -73,7 +73,6 @@ const formSchema = z
     ownsVehicle: z.enum(["yes", "no"], {
       required_error: "Please select if you own a vehicle",
     }),
-    eligibilityCapacityTons: z.number(),
     hasRequiredDocs: z.enum(["yes", "no"], {
       required_error: "Please confirm you have required documents",
     }),
@@ -150,22 +149,12 @@ const formSchema = z
       message: "Enter CIPC registration number",
       path: ["cipcNumber"],
     }
-  )
-  .refine(
-    (data) =>
-      data.eligibilityCapacityTons >= 1 && data.eligibilityCapacityTons <= 15,
-    {
-      message: "Capacity must be between 1T and 15T",
-      path: ["eligibilityCapacityTons"],
-    }
   );
-
 type FormValues = z.infer<typeof formSchema>;
 
 const defaultValues: FormValues = {
   // eligibility
   ownsVehicle: undefined as any,
-  eligibilityCapacityTons: 0,
   hasRequiredDocs: undefined as any,
   // step 1
   fullName: "",
@@ -531,7 +520,6 @@ const Index = () => {
 
   const entityType = watch("entityType");
   const ownsVehicle = watch("ownsVehicle");
-  const eligCap = watch("eligibilityCapacityTons");
   const hasDocs = watch("hasRequiredDocs");
   const numberOfTrucks = watch("numberOfTrucks");
   const trucks = watch("trucks");
@@ -577,19 +565,17 @@ const Index = () => {
   const eligibilityStatus = useMemo(() => {
     if (ownsVehicle !== "yes")
       return { ok: false, reason: "Reject: Driver only not allowed" };
-    if (!(eligCap >= 1 && eligCap <= 15))
-      return { ok: false, reason: "Reject: Invalid truck size" };
     if (hasDocs !== "yes")
       return {
         ok: false,
         reason: "Reject: Missing roadworthy or insurance",
       };
     return { ok: true } as const;
-  }, [ownsVehicle, eligCap, hasDocs]);
+  }, [ownsVehicle, hasDocs]);
   const progressPct = Math.round((step / (steps.length - 1)) * 100);
   const goNext = async () => {
     const fieldsByStep: (keyof FormValues)[][] = [
-      ["ownsVehicle", "eligibilityCapacityTons", "hasRequiredDocs"],
+      ["ownsVehicle", "hasRequiredDocs"],
       [
         "fullName",
         "idNumber",
@@ -759,30 +745,6 @@ const Index = () => {
                                       <Label htmlFor="owns-no">No</Label>
                                     </div>
                                   </RadioGroup>
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            name="eligibilityCapacityTons"
-                            control={control}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Capacity (tons)</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    inputMode="decimal"
-                                    type="number"
-                                    min={1}
-                                    max={15}
-                                    step="0.1"
-                                    placeholder="1–15"
-                                    value={field.value ?? ""}
-                                    onChange={(e) =>
-                                      field.onChange(Number(e.target.value))
-                                    }
-                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
