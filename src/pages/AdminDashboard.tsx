@@ -139,7 +139,7 @@ export default function AdminDashboard() {
     const header = Object.keys(rows[0] || { id: "", applicant_name: "", email: "", phone: "", status: "", submitted_at: "" });
     const csv = [
       header.join(","),
-      ...rows.map((r) => header.map((h) => `${String((r as any)[h]).replaceAll('"', '""')}`).join(",")),
+      ...rows.map((r) => header.map((h) => `${String((r as any)[h]).replace(/"/g, '""')}`).join(",")),
     ].join("\n");
 
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
