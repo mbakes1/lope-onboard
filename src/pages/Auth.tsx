@@ -20,17 +20,23 @@ export default function Auth() {
   }, [mode]);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_evt, session) => {
-      if (session) {
+    const checkAndRedirect = async (session: any) => {
+      if (!session) return;
+      const { data, error } = await supabase.rpc("has_role", { _user_id: session.user.id, _role: "admin" });
+      if (data && !error) {
         const to = location.state?.from?.pathname || "/admin";
         navigate(to, { replace: true });
+      } else {
+        toast.error("Your account doesn't have admin access yet.");
+        navigate("/", { replace: true });
       }
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_evt, session) => {
+      checkAndRedirect(session);
     });
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        const to = location.state?.from?.pathname || "/admin";
-        navigate(to, { replace: true });
-      }
+      checkAndRedirect(session);
     });
     return () => subscription.unsubscribe();
   }, [navigate, location.state]);
