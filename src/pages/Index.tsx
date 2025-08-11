@@ -52,6 +52,8 @@ import {
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import Footer from "@/components/Footer";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // Provinces list for South Africa
 const PROVINCES = [
@@ -485,6 +487,7 @@ function MultiFileUpload() {
 const Index = () => {
   const [step, setStep] = useState(0);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [showEligibilityModal, setShowEligibilityModal] = useState(false);
   const [currentTruckIndex, setCurrentTruckIndex] = useState(0);
   const methods = useForm<FormValues>({
@@ -681,12 +684,71 @@ const Index = () => {
     });
   };
 
-  const onSubmit: SubmitHandler<FormValues> = async (data) => {
-    console.log("Onboarding submitted", data);
+const onSubmit: SubmitHandler<FormValues> = async (data) => {
+  const sanitize = (name: string) => name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  try {
+    setSubmitting(true);
+    const applicationId = (crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    const { data: sessionData } = await supabase.auth.getSession();
+    const userId = sessionData.session?.user?.id ?? null;
+
+    const bucket = supabase.storage.from('onboarding-documents');
+
+    // Upload vehicle documents
+    const vehicleUploads: Array<{ name: string; path: string; url: string; size: number; type: string }> = [];
+    if (Array.isArray(data.vehicleDocuments)) {
+      for (let i = 0; i < data.vehicleDocuments.length; i++) {
+        const file = data.vehicleDocuments[i] as File;
+        if (!file) continue;
+        const path = `applications/${applicationId}/vehicle-docs/${i}-${sanitize(file.name)}`;
+        const { error: upErr } = await bucket.upload(path, file, { upsert: true });
+        if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
+        const { data: pub } = bucket.getPublicUrl(path);
+        vehicleUploads.push({ name: file.name, path, url: pub.publicUrl, size: file.size, type: file.type });
+      }
+    }
+
+    // Upload proof of bank
+    let proofOfBankRef: null | { name: string; path: string; url: string; size: number; type: string } = null;
+    if (data.proofOfBank instanceof File) {
+      const f = data.proofOfBank as File;
+      const path = `applications/${applicationId}/bank-proof/${sanitize(f.name)}`;
+      const { error: upErr } = await bucket.upload(path, f, { upsert: true });
+      if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
+      const { data: pub } = bucket.getPublicUrl(path);
+      proofOfBankRef = { name: f.name, path, url: pub.publicUrl, size: f.size, type: f.type };
+    }
+
+    // Build payload replacing file fields with uploaded refs
+    const payload = {
+      ...data,
+      vehicleDocuments: vehicleUploads,
+      proofOfBank: proofOfBankRef,
+    };
+
+    const { error: insertError } = await supabase.from('onboarding_applications').insert({
+      id: applicationId,
+      applicant_name: data.fullName,
+      email: data.email,
+      phone: data.mobile,
+      user_id: userId,
+      payload,
+      status: 'pending',
+    } as any);
+
+    if (insertError) throw new Error(insertError.message);
+
+    toast.success('Application submitted successfully');
     setIsSuccess(true);
     triggerConfetti();
     setTimeout(triggerConfetti, 300);
-  };
+  } catch (err: any) {
+    console.error(err);
+    toast.error(err.message || 'Submission failed. Please try again.');
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   return (
     <main className="min-h-screen relative flex flex-col">
@@ -1751,12 +1813,13 @@ const Index = () => {
                               Continue
                             </Button>
                           ) : (
-                            <Button
-                              type="submit"
-                              className="order-1 sm:order-2 h-12 sm:h-10 transition-transform hover:-translate-y-0.5"
-                            >
-                              Submit Application
-                            </Button>
+<Button
+  type="submit"
+  disabled={submitting}
+  className="order-1 sm:order-2 h-12 sm:h-10 transition-transform hover:-translate-y-0.5"
+>
+  {submitting ? "Submitting..." : "Submit Application"}
+</Button>
                           )}
                         </div>
                       </div>
